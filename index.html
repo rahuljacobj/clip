@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📋 My Clipboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Reset & base ─────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f0f0f;
+    --surface:   #181818;
+    --surface2:  #222222;
+    --border:    #2e2e2e;
+    --text:      #e8e6e1;
+    --muted:     #666;
+    --accent:    #c8f060;      /* lime */
+    --accent-d:  #9ec040;
+    --wa:        #25d366;      /* WhatsApp green */
+    --site:      #60a0f0;      /* site blue */
+    --radius:    10px;
+    --mono:      'DM Mono', monospace;
+    --sans:      'Syne', sans-serif;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: var(--sans); }
+
+  body {
+    min-height: 100vh;
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -.02em;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background .3s;
+  }
+  .status-dot.live { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+  }
+
+  .btn-clear {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .35rem .7rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-clear:hover { color: #e05050; border-color: #e05050; }
+
+  /* ── Input area ─────────────────────────────────── */
+  .input-zone {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    transition: border-color .2s;
+  }
+  .input-zone.dragover { border-color: var(--accent); }
+
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: .88rem;
+    color: var(--text);
+    padding: 1rem 1.1rem;
+    line-height: 1.65;
+  }
+  textarea::placeholder { color: var(--muted); }
+
+  .input-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .6rem 1rem;
+    border-top: 1px solid var(--border);
+    gap: .8rem;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .btn-file {
+    font-family: var(--mono);
+    font-size: .75rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .35rem .75rem;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-file:hover { color: var(--text); border-color: var(--muted); }
+
+  #file-input { display: none; }
+
+  .file-preview {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--accent);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-add {
+    font-family: var(--sans);
+    font-size: .85rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: 7px;
+    padding: .5rem 1.2rem;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-add:hover  { background: var(--accent-d); transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+  .btn-add:disabled { opacity: .4; cursor: default; transform: none; }
+
+  /* ── Drop hint ───────────────────────────────────── */
+  .drop-hint {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    padding: .4rem 0 .6rem;
+    letter-spacing: .03em;
+  }
+
+  /* ── Section header ──────────────────────────────── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    font-size: .72rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .item-count {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+  }
+
+  /* ── Clipboard items ─────────────────────────────── */
+  #items-list { display: flex; flex-direction: column; gap: .75rem; }
+
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: slideIn .2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .55rem .9rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .source-badge {
+    font-family: var(--mono);
+    font-size: .65rem;
+    padding: .18rem .5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: .04em;
+  }
+  .source-badge.whatsapp { background: rgba(37,211,102,.15); color: var(--wa); }
+  .source-badge.site     { background: rgba(96,160,240,.15); color: var(--site); }
+
+  .type-badge {
+    font-family: var(--mono);
+    font-size: .65rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: .18rem .5rem;
+  }
+
+  .item-time {
+    font-family: var(--mono);
+    font-size: .65rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .item-content {
+    padding: .75rem .9rem;
+  }
+
+  /* text item */
+  .text-content {
+    font-family: var(--mono);
+    font-size: .85rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* image item */
+  .img-content {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 6px;
+    display: block;
+    object-fit: contain;
+  }
+
+  /* audio */
+  audio { width: 100%; }
+
+  /* doc / binary */
+  .doc-content {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+  }
+  .doc-icon {
+    width: 40px; height: 40px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .doc-name {
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .doc-size {
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: .15rem;
+  }
+
+  /* actions */
+  .item-actions {
+    display: flex;
+    gap: .5rem;
+    padding: .55rem .9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-action {
+    font-family: var(--mono);
+    font-size: .72rem;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: .3rem .7rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-action:hover { color: var(--text); border-color: var(--muted); }
+  .btn-action.copied { color: var(--accent); border-color: var(--accent); }
+  .btn-action.delete:hover { color: #e05050; border-color: #e05050; }
+
+  /* ── Empty state ─────────────────────────────────── */
+  .empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: .4; }
+  .empty p { font-family: var(--mono); font-size: .82rem; line-height: 1.7; }
+
+  /* ── Toast ───────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .6rem 1.2rem;
+    font-family: var(--mono);
+    font-size: .8rem;
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    transition: all .25s;
+    white-space: nowrap;
+    z-index: 99;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── Scrollbar ───────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- ─── CONFIG — change this to your Cloudflare Worker URL ─── -->
+<script>
+  const WORKER_URL = 'REPLACE_WITH_YOUR_WORKER_URL'; 
+  // e.g. 'https://whatsapp-clipboard.yourname.workers.dev'
+</script>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    My Clipboard
+  </div>
+  <div class="header-right">
+    <div class="status-dot" id="dot" title="Live sync"></div>
+    <button class="btn-clear" onclick="clearAll()">clear all</button>
+  </div>
+</header>
+
+<!-- ── Input zone ───────────────────────────────────────────── -->
+<div class="input-zone" id="dropzone">
+  <textarea id="txt" placeholder="Paste text here, or drop a file…"></textarea>
+  <div class="input-toolbar">
+    <div class="toolbar-left">
+      <label class="btn-file" for="file-input">+ file</label>
+      <input type="file" id="file-input" onchange="onFileSelected(this)"/>
+      <span class="file-preview" id="file-name"></span>
+    </div>
+    <button class="btn-add" id="add-btn" onclick="addItem()">Add →</button>
+  </div>
+</div>
+<div class="drop-hint">drop any file here to add it · updates every 3s</div>
+
+<!-- ── Items ────────────────────────────────────────────────── -->
+<div class="section-header" style="margin-top:1.5rem">
+  <span class="section-label">clipboard</span>
+  <span class="item-count" id="count"></span>
+</div>
+<div id="items-list"></div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+let items      = [];
+let pendingFile = null;
+let pollTimer  = null;
+
+// ── Drag & drop ───────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) attachFile(file);
+});
+
+function onFileSelected(input) {
+  if (input.files[0]) attachFile(input.files[0]);
+}
+
+function attachFile(file) {
+  pendingFile = file;
+  document.getElementById('file-name').textContent = file.name;
+}
+
+// ── Add item ──────────────────────────────────────────────────
+async function addItem() {
+  const btn = document.getElementById('add-btn');
+  const txt = document.getElementById('txt').value.trim();
+  if (!txt && !pendingFile) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    if (pendingFile) {
+      await uploadFile(pendingFile);
+    } else {
+      await postJSON({ type: 'text', content: txt });
+    }
+    document.getElementById('txt').value = '';
+    pendingFile = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-name').textContent = '';
+    await refresh();
+    toast('Added ✓');
+  } catch(e) {
+    toast('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Add →';
+  }
+}
+
+async function uploadFile(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = reader.result.split(',')[1];
+        const type   = file.type.startsWith('image/') ? 'image'
+                     : file.type.startsWith('audio/') ? 'audio'
+                     : 'document';
+        await postJSON({ type, content: base64, mimeType: file.type, filename: file.name });
+        res();
+      } catch(e) { rej(e); }
+    };
+    reader.onerror = () => rej(new Error('File read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function postJSON(data) {
+  const r = await fetch(`${WORKER_URL}/api/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error('Worker returned ' + r.status);
+  return r.json();
+}
+
+// ── Fetch & render ────────────────────────────────────────────
+async function refresh() {
+  try {
+    const res = await fetch(`${WORKER_URL}/api/items`);
+    if (!res.ok) throw new Error();
+    items = await res.json();
+    render();
+    setDot(true);
+  } catch {
+    setDot(false);
+  }
+}
+
+function render() {
+  const list = document.getElementById('items-list');
+  document.getElementById('count').textContent = items.length
+    ? `${items.length} item${items.length !== 1 ? 's' : ''}`
+    : '';
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">📭</div>
+      <p>Nothing here yet.<br>Paste text, drop a file, or send something on WhatsApp.</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(item => `
+    <div class="item" id="item-${item.id}">
+      <div class="item-header">
+        <span class="source-badge ${item.source}">${item.source === 'whatsapp' ? '↙ WhatsApp' : '↗ Site'}</span>
+        <span class="type-badge">${item.type}</span>
+        <span class="item-time">${relTime(item.timestamp)}</span>
+      </div>
+      <div class="item-content">
+        ${renderContent(item)}
+      </div>
+      <div class="item-actions">
+        ${copyButton(item)}
+        ${downloadButton(item)}
+        <button class="btn-action delete" onclick="deleteItem('${item.id}')">delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderContent(item) {
+  if (item.type === 'text') {
+    return `<div class="text-content">${escHtml(item.content)}</div>`;
+  }
+  if (item.type === 'image') {
+    return `<img class="img-content" src="data:${item.mimeType};base64,${item.content}" alt="Image"/>`;
+  }
+  if (item.type === 'audio') {
+    return `<audio controls src="data:${item.mimeType};base64,${item.content}"></audio>`;
+  }
+  // document / other
+  const icon = docIcon(item.mimeType);
+  const size  = item.content ? Math.round(item.content.length * .75 / 1024) + ' KB' : '';
+  return `<div class="doc-content">
+    <div class="doc-icon">${icon}</div>
+    <div>
+      <div class="doc-name">${escHtml(item.filename || 'file')}</div>
+      ${size ? `<div class="doc-size">${size}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function copyButton(item) {
+  if (item.type !== 'text') return '';
+  return `<button class="btn-action" onclick="copyText('${item.id}', this)">copy</button>`;
+}
+
+function downloadButton(item) {
+  if (item.type === 'text') return '';
+  const ext = extFromMime(item.mimeType);
+  const name = item.filename || ('file' + ext);
+  return `<button class="btn-action" onclick="download('${item.id}','${escAttr(name)}')">download</button>`;
+}
+
+// ── Actions ───────────────────────────────────────────────────
+async function deleteItem(id) {
+  await fetch(`${WORKER_URL}/api/items/${id}`, { method: 'DELETE' });
+  await refresh();
+}
+
+async function clearAll() {
+  if (!confirm('Clear all clipboard items?')) return;
+  await fetch(`${WORKER_URL}/api/items`, { method: 'DELETE' });
+  await refresh();
+}
+
+function copyText(id, btn) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  navigator.clipboard.writeText(item.content).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+function download(id, filename) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const a    = document.createElement('a');
+  a.href     = `data:${item.mimeType};base64,${item.content}`;
+  a.download = filename;
+  a.click();
+}
+
+// ── Paste shortcut ────────────────────────────────────────────
+document.addEventListener('paste', e => {
+  const active = document.activeElement;
+  if (active && active.id === 'txt') return; // already in textarea
+  const text = e.clipboardData.getData('text');
+  if (text) {
+    document.getElementById('txt').value = text;
+    toast('Text pasted — hit Add →');
+  }
+  const file = e.clipboardData.files[0];
+  if (file) { attachFile(file); toast(`File ready: ${file.name}`); }
+});
+
+// ── Helpers ───────────────────────────────────────────────────
+function setDot(live) {
+  document.getElementById('dot').classList.toggle('live', live);
+}
+
+function toast(msg, ms = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function relTime(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 60000)   return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return String(s).replace(/"/g,'&quot;');
+}
+
+function docIcon(mime = '') {
+  if (mime.includes('pdf'))   return '📄';
+  if (mime.includes('zip') || mime.includes('archive')) return '🗜️';
+  if (mime.includes('video')) return '🎬';
+  if (mime.includes('sheet') || mime.includes('excel')) return '📊';
+  if (mime.includes('word'))  return '📝';
+  return '📎';
+}
+
+function extFromMime(mime = '') {
+  const map = {
+    'image/jpeg': '.jpg', 'image/png': '.png', 'image/gif': '.gif',
+    'image/webp': '.webp', 'application/pdf': '.pdf',
+    'audio/ogg': '.ogg', 'audio/mpeg': '.mp3', 'audio/mp4': '.m4a',
+    'video/mp4': '.mp4',
+  };
+  return map[mime] || '';
+}
+
+// ── Auto-poll ─────────────────────────────────────────────────
+refresh();
+pollTimer = setInterval(refresh, 3000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { clearInterval(pollTimer); }
+  else { refresh(); pollTimer = setInterval(refresh, 3000); }
+});
+</script>
+</body>
+</html>
