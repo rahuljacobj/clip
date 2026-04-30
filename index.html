@@ -1,146 +1,427 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>📋 My Clipboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet"/>
+<title>CLIP//BOARD</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;900&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#0f0f0f; --surface:#181818; --surface2:#222; --border:#2e2e2e;
-    --text:#e8e6e1; --muted:#666; --accent:#c8f060; --accent-d:#9ec040;
-    --shortcut:#bf7af0; --site:#60a0f0; --radius:10px;
-    --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
-  }
-  html { background:var(--bg); color:var(--text); font-family:var(--sans); }
-  body { min-height:100vh; max-width:740px; margin:0 auto; padding:0 1rem 4rem; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-header { display:flex; align-items:center; justify-content:space-between; padding:2rem 0 1.5rem; border-bottom:1px solid var(–border); margin-bottom:2rem; }
-.logo { display:flex; align-items:center; gap:.6rem; font-size:1.1rem; font-weight:600; letter-spacing:-.02em; }
-.logo-icon { width:32px; height:32px; background:var(–accent); border-radius:8px; display:grid; place-items:center; font-size:16px; }
-.header-right { display:flex; align-items:center; gap:.8rem; }
+:root {
+  --bg:       #020c02;
+  --bg2:      #040f04;
+  --surface:  #071407;
+  --surface2: #0a1e0a;
+  --border:   #0d3b0d;
+  --border2:  #1a5c1a;
+  --green:    #00ff41;
+  --green2:   #00cc33;
+  --green3:   #004d14;
+  --blue:     #00d4ff;
+  --blue2:    #0099cc;
+  --tg:       #29b6f6;
+  --red:      #ff2244;
+  --muted:    #2a5c2a;
+  --text:     #c8ffc8;
+  --text2:    #7acc7a;
+  --mono:     'Share Tech Mono', monospace;
+  --display:  'Orbitron', monospace;
+  --glow:     0 0 10px #00ff4166, 0 0 30px #00ff4133;
+  --glow-sm:  0 0 6px #00ff4199;
+  --radius:   2px;
+}
 
-.status-pill { font-family:var(–mono); font-size:.65rem; padding:.2rem .6rem; border-radius:99px; border:1px solid var(–border); color:var(–muted); display:flex; align-items:center; gap:.35rem; transition:all .3s; }
-.status-pill .dot { width:6px; height:6px; border-radius:50%; background:var(–muted); transition:background .3s; }
-.status-pill.live { color:var(–accent); border-color:var(–accent); }
-.status-pill.live .dot { background:var(–accent); box-shadow:0 0 6px var(–accent); }
-.status-pill.polling { color:var(–site); border-color:var(–site); }
-.status-pill.polling .dot { background:var(–site); }
+html { background: var(--bg); color: var(--text); font-family: var(--mono); cursor: crosshair; }
 
-.btn-clear { font-family:var(–mono); font-size:.72rem; color:var(–muted); background:none; border:1px solid var(–border); border-radius:6px; padding:.35rem .7rem; cursor:pointer; transition:all .15s; }
-.btn-clear:hover { color:#e05050; border-color:#e05050; }
+/* Scanline overlay */
+html::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.15) 2px, rgba(0,0,0,.15) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
 
-.input-zone { background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); overflow:hidden; margin-bottom:1.5rem; transition:border-color .2s; }
-.input-zone.dragover { border-color:var(–accent); }
-textarea { width:100%; min-height:110px; background:transparent; border:none; outline:none; resize:vertical; font-family:var(–mono); font-size:.88rem; color:var(–text); padding:1rem 1.1rem; line-height:1.65; }
-textarea::placeholder { color:var(–muted); }
+body {
+  min-height: 100vh;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1.2rem 6rem;
+  /* Grid bg */
+  background-image:
+    linear-gradient(rgba(0,255,65,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
-.input-toolbar { display:flex; align-items:center; justify-content:space-between; padding:.6rem 1rem; border-top:1px solid var(–border); gap:.8rem; }
-.toolbar-left { display:flex; align-items:center; gap:.6rem; }
-.btn-file { font-family:var(–mono); font-size:.75rem; color:var(–muted); background:var(–surface2); border:1px solid var(–border); border-radius:6px; padding:.35rem .75rem; cursor:pointer; transition:all .15s; }
-.btn-file:hover { color:var(–text); border-color:var(–muted); }
-#file-input { display:none; }
-.file-preview { font-family:var(–mono); font-size:.72rem; color:var(–accent); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.btn-add { font-family:var(–sans); font-size:.85rem; font-weight:600; background:var(–accent); color:#0f0f0f; border:none; border-radius:7px; padding:.5rem 1.2rem; cursor:pointer; transition:all .15s; }
-.btn-add:hover { background:var(–accent-d); transform:translateY(-1px); }
-.btn-add:active { transform:translateY(0); }
-.btn-add:disabled { opacity:.4; cursor:default; transform:none; }
+/* ── Header ──────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 0 1.5rem;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 2rem;
+  position: relative;
+}
 
-.drop-hint { text-align:center; font-family:var(–mono); font-size:.72rem; color:var(–muted); padding:.4rem 0 .6rem; }
+header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0;
+  width: 40%;
+  height: 1px;
+  background: var(--green);
+  box-shadow: var(--glow-sm);
+}
 
-/* Shortcut hint banner */
-.shortcut-hint { background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); padding:.75rem 1rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:.75rem; }
-.shortcut-hint-icon { font-size:1.2rem; flex-shrink:0; }
-.shortcut-hint-text { font-family:var(–mono); font-size:.75rem; color:var(–muted); line-height:1.5; }
-.shortcut-hint-text strong { color:var(–shortcut); }
+.logo {
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+}
 
-.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-.section-label { font-size:.72rem; font-family:var(–mono); color:var(–muted); letter-spacing:.1em; text-transform:uppercase; }
-.item-count { font-family:var(–mono); font-size:.72rem; color:var(–muted); }
+.logo-main {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+  color: var(--green);
+  text-shadow: var(--glow);
+  line-height: 1;
+}
 
-#items-list { display:flex; flex-direction:column; gap:.75rem; }
-.item { background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); overflow:hidden; animation:slideIn .2s ease; }
-@keyframes slideIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.logo-sub {
+  font-size: .6rem;
+  color: var(--muted);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+}
 
-.item-header { display:flex; align-items:center; gap:.6rem; padding:.55rem .9rem; border-bottom:1px solid var(–border); }
-.source-badge { font-family:var(–mono); font-size:.65rem; padding:.18rem .5rem; border-radius:4px; font-weight:500; }
-.source-badge.shortcut { background:rgba(191,122,240,.15); color:var(–shortcut); }
-.source-badge.site { background:rgba(96,160,240,.15); color:var(–site); }
-.type-badge { font-family:var(–mono); font-size:.65rem; color:var(–muted); background:var(–surface2); border-radius:4px; padding:.18rem .5rem; }
-.item-time { font-family:var(–mono); font-size:.65rem; color:var(–muted); margin-left:auto; }
-.item-content { padding:.75rem .9rem; }
+.header-right { display: flex; align-items: center; gap: .8rem; }
 
-.text-content { font-family:var(–mono); font-size:.85rem; line-height:1.65; white-space:pre-wrap; word-break:break-word; max-height:200px; overflow-y:auto; }
-.img-content { max-width:100%; max-height:300px; border-radius:6px; display:block; object-fit:contain; }
-audio { width:100%; }
-.doc-content { display:flex; align-items:center; gap:.8rem; }
-.doc-icon { width:40px; height:40px; background:var(–surface2); border-radius:8px; display:grid; place-items:center; font-size:20px; flex-shrink:0; }
-.doc-name { font-family:var(–mono); font-size:.82rem; word-break:break-all; }
-.doc-size { font-family:var(–mono); font-size:.7rem; color:var(–muted); margin-top:.15rem; }
+.status-pill {
+  font-size: .65rem;
+  padding: .25rem .7rem;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  display: flex; align-items: center; gap: .4rem;
+  transition: all .3s;
+  letter-spacing: .1em;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  background: var(--surface);
+}
+.status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); transition: all .3s; }
+.status-pill.live { color: var(--green); border-color: var(--green); }
+.status-pill.live .dot { background: var(--green); box-shadow: var(--glow-sm); animation: pulse 2s infinite; }
+.status-pill.polling { color: var(--blue); border-color: var(--blue2); }
+.status-pill.polling .dot { background: var(--blue); }
 
-.item-actions { display:flex; gap:.5rem; padding:.55rem .9rem; border-top:1px solid var(–border); }
-.btn-action { font-family:var(–mono); font-size:.72rem; background:var(–surface2); color:var(–muted); border:1px solid var(–border); border-radius:5px; padding:.3rem .7rem; cursor:pointer; transition:all .15s; }
-.btn-action:hover { color:var(–text); border-color:var(–muted); }
-.btn-action.copied { color:var(–accent); border-color:var(–accent); }
-.btn-action.delete:hover { color:#e05050; border-color:#e05050; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-.empty { text-align:center; padding:4rem 1rem; color:var(–muted); }
-.empty-icon { font-size:2.5rem; margin-bottom:1rem; opacity:.4; }
-.empty p { font-family:var(–mono); font-size:.82rem; line-height:1.7; }
+.btn-clear {
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border2);
+  padding: .3rem .7rem;
+  cursor: crosshair;
+  letter-spacing: .1em;
+  transition: all .15s;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.btn-clear:hover { color: var(--red); border-color: var(--red); text-shadow: 0 0 8px var(--red); }
 
-#toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(10px); background:var(–surface2); border:1px solid var(–border); border-radius:8px; padding:.6rem 1.2rem; font-family:var(–mono); font-size:.8rem; color:var(–text); opacity:0; pointer-events:none; transition:all .25s; white-space:nowrap; z-index:99; }
-#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(–border); border-radius:99px; }
+/* ── Input zone ──────────────────────────────────────────── */
+.input-zone {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  margin-bottom: .5rem;
+  position: relative;
+  transition: border-color .2s;
+}
+.input-zone::before {
+  content: '> INPUT_';
+  position: absolute;
+  top: .6rem; left: .9rem;
+  font-size: .6rem;
+  color: var(--green3);
+  letter-spacing: .15em;
+  pointer-events: none;
+}
+.input-zone.dragover { border-color: var(--green); box-shadow: var(--glow); }
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  background: transparent;
+  border: none; outline: none;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: .85rem;
+  color: var(--text);
+  padding: 1.8rem 1rem .8rem;
+  line-height: 1.7;
+  caret-color: var(--green);
+}
+textarea::placeholder { color: var(--green3); }
+textarea::selection { background: var(--green3); color: var(--green); }
+
+.input-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .5rem .9rem; border-top: 1px solid var(--border);
+  gap: .8rem;
+}
+.toolbar-left { display: flex; align-items: center; gap: .6rem; }
+
+.btn-file {
+  font-family: var(--mono); font-size: .7rem;
+  color: var(--text2); background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: .3rem .7rem; cursor: crosshair; transition: all .15s;
+  letter-spacing: .08em;
+}
+.btn-file:hover { color: var(--green); border-color: var(--green); box-shadow: var(--glow-sm); }
+#file-input { display: none; }
+
+.file-preview { font-size: .7rem; color: var(--blue); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.btn-add {
+  font-family: var(--display);
+  font-size: .7rem; font-weight: 600;
+  background: var(--green);
+  color: #020c02;
+  border: none;
+  padding: .45rem 1.2rem;
+  cursor: crosshair;
+  letter-spacing: .15em;
+  transition: all .15s;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+.btn-add:hover { background: #fff; box-shadow: var(--glow); }
+.btn-add:disabled { opacity: .3; cursor: default; }
+
+.drop-hint {
+  font-size: .62rem; color: var(--muted); text-align: center;
+  padding: .35rem 0 1.2rem; letter-spacing: .15em;
+}
+
+/* ── Telegram banner ────────────────────────────────────── */
+.tg-banner {
+  border: 1px solid #1a4a6b;
+  background: rgba(41,182,246,.05);
+  padding: .8rem 1rem;
+  margin-bottom: 1.5rem;
+  display: flex; align-items: flex-start; gap: .8rem;
+  position: relative;
+}
+.tg-banner::before {
+  content: 'OPTIONAL_MODULE';
+  position: absolute; top: -.45rem; left: .8rem;
+  font-size: .55rem; color: var(--tg); background: var(--bg);
+  padding: 0 .4rem; letter-spacing: .15em;
+}
+.tg-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: .1rem; }
+.tg-text { font-size: .72rem; color: #7ac9e8; line-height: 1.6; }
+.tg-text strong { color: var(--tg); }
+.tg-text a { color: var(--tg); text-decoration: none; border-bottom: 1px solid rgba(41,182,246,.4); }
+.tg-text a:hover { color: #fff; }
+
+/* ── Section header ─────────────────────────────────────── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: .5rem;
+}
+.section-label {
+  font-family: var(--display);
+  font-size: .6rem; color: var(--green);
+  letter-spacing: .3em; text-transform: uppercase;
+  text-shadow: var(--glow-sm);
+}
+.item-count { font-size: .65rem; color: var(--muted); letter-spacing: .1em; }
+
+/* ── Items ──────────────────────────────────────────────── */
+#items-list { display: flex; flex-direction: column; gap: .75rem; }
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  position: relative;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+
+/* corner accent */
+.item::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 20px; height: 20px;
+  border-top: 2px solid var(--green);
+  border-left: 2px solid var(--green);
+  box-shadow: -2px -2px 8px rgba(0,255,65,.2);
+}
+.item::after {
+  content: '';
+  position: absolute; bottom: 0; right: 0;
+  width: 12px; height: 12px;
+  border-bottom: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
+}
+
+.item-header {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .9rem; border-bottom: 1px solid var(--border);
+}
+
+.source-badge {
+  font-size: .6rem; padding: .15rem .5rem;
+  letter-spacing: .1em; font-weight: 600;
+}
+.source-badge.site     { background: rgba(96,160,240,.12); color: var(--blue); border: 1px solid rgba(96,160,240,.3); }
+.source-badge.shortcut { background: rgba(191,122,240,.12); color: #bf7af0; border: 1px solid rgba(191,122,240,.3); }
+.source-badge.telegram { background: rgba(41,182,246,.12); color: var(--tg); border: 1px solid rgba(41,182,246,.3); }
+
+.type-badge {
+  font-size: .6rem; color: var(--muted);
+  background: var(--surface2); padding: .15rem .5rem;
+  letter-spacing: .08em;
+}
+.item-time { font-size: .6rem; color: var(--muted); margin-left: auto; letter-spacing: .05em; }
+
+.item-content { padding: .8rem .9rem; }
+.text-content {
+  font-size: .83rem; line-height: 1.7; white-space: pre-wrap;
+  word-break: break-word; max-height: 200px; overflow-y: auto;
+  color: var(--text);
+}
+.img-content { max-width: 100%; max-height: 280px; border: 1px solid var(--border2); display: block; object-fit: contain; }
+audio { width: 100%; filter: invert(1) hue-rotate(100deg); }
+
+.doc-content { display: flex; align-items: center; gap: .8rem; }
+.doc-icon {
+  width: 42px; height: 42px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  display: grid; place-items: center; font-size: 20px; flex-shrink: 0;
+}
+.doc-name { font-size: .8rem; word-break: break-all; color: var(--text); }
+.doc-size { font-size: .68rem; color: var(--muted); margin-top: .15rem; }
+
+.item-actions { display: flex; gap: .5rem; padding: .5rem .9rem; border-top: 1px solid var(--border); }
+.btn-action {
+  font-family: var(--mono); font-size: .68rem;
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border2);
+  padding: .28rem .65rem; cursor: crosshair; transition: all .15s;
+  letter-spacing: .08em;
+}
+.btn-action:hover { color: var(--green); border-color: var(--green); }
+.btn-action.copied { color: var(--green); border-color: var(--green); box-shadow: var(--glow-sm); }
+.btn-action.delete:hover { color: var(--red); border-color: var(--red); }
+
+/* ── Empty ───────────────────────────────────────────────── */
+.empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+.empty-icon { font-size: 2rem; margin-bottom: 1rem; opacity: .3; }
+.empty p { font-size: .78rem; line-height: 1.8; letter-spacing: .05em; }
+
+/* ── Toast ───────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--surface2); border: 1px solid var(--green);
+  padding: .5rem 1.2rem;
+  font-size: .75rem; color: var(--green); letter-spacing: .1em;
+  opacity: 0; pointer-events: none; transition: all .2s;
+  z-index: 99; box-shadow: var(--glow);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--green3); }
 </style>
-
 </head>
 <body>
 
 <script>
-  const WORKER_URL = 'https://gentle-sea-9a71.iamrahuljacobrj.workers.dev';
+  const WORKER_URL = 'REPLACE_WITH_YOUR_WORKER_URL';
 </script>
 
 <header>
-  <div class="logo"><div class="logo-icon">📋</div>My Clipboard</div>
+  <div class="logo">
+    <div class="logo-main">CLIP//BOARD</div>
+    <div class="logo-sub">secure · instant · cross-device</div>
+  </div>
   <div class="header-right">
     <div class="status-pill" id="status-pill"><div class="dot"></div><span id="status-text">connecting</span></div>
-    <button class="btn-clear" onclick="clearAll()">clear all</button>
+    <button class="btn-clear" onclick="clearAll()">CLR_ALL</button>
   </div>
 </header>
 
 <div class="input-zone" id="dropzone">
-  <textarea id="txt" placeholder="Paste text here, or drop a file…"></textarea>
+  <textarea id="txt" placeholder="paste text or drop file…"></textarea>
   <div class="input-toolbar">
     <div class="toolbar-left">
-      <label class="btn-file" for="file-input">+ file</label>
+      <label class="btn-file" for="file-input">[+ FILE]</label>
       <input type="file" id="file-input" onchange="onFileSelected(this)"/>
       <span class="file-preview" id="file-name"></span>
     </div>
-    <button class="btn-add" id="add-btn" onclick="addItem()">Add →</button>
+    <button class="btn-add" id="add-btn" onclick="addItem()">TRANSMIT</button>
   </div>
 </div>
-<div class="drop-hint">drop any file · live sync active</div>
+<div class="drop-hint">// drag & drop any file · live sync via SSE · updates instantly</div>
 
-<div class="shortcut-hint">
-  <div class="shortcut-hint-icon">⚡</div>
-  <div class="shortcut-hint-text">
-    <strong>From iPhone:</strong> tap Share → "Send to Clipboard" in any app<br>
-    <strong>To iPhone:</strong> run the "Fetch Clipboard" shortcut to sync to Notes
+<div class="tg-banner">
+  <div class="tg-icon">✈️</div>
+  <div class="tg-text">
+    <strong>TELEGRAM MODULE</strong> — send files &amp; text from your phone instantly, zero token expiry.<br>
+    Setup: <a href="#" onclick="showTgGuide();return false;">click here for 3-step guide</a> · 
+    Add <code>TELEGRAM_BOT_TOKEN</code> + <code>TELEGRAM_CHAT_ID</code> to Cloudflare Worker vars to activate.
   </div>
 </div>
 
 <div class="section-header">
-  <span class="section-label">clipboard</span>
+  <span class="section-label">// BUFFER</span>
   <span class="item-count" id="count"></span>
 </div>
 <div id="items-list"></div>
 <div id="toast"></div>
 
+<!-- Telegram guide modal -->
+<div id="tg-modal" style="display:none;position:fixed;inset:0;background:rgba(2,12,2,.92);z-index:999;padding:2rem;overflow-y:auto;">
+  <div style="max-width:560px;margin:0 auto;border:1px solid #1a4a6b;background:#040f04;padding:2rem;position:relative;">
+    <div style="font-family:'Orbitron',monospace;color:#29b6f6;font-size:.9rem;letter-spacing:.2em;margin-bottom:1.5rem;">TELEGRAM_SETUP</div>
+    <button onclick="document.getElementById('tg-modal').style.display='none'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:#2a5c2a;font-size:1.2rem;cursor:pointer;">✕</button>
+    <div style="font-size:.78rem;line-height:2;color:#7ac9e8;">
+      <strong style="color:#29b6f6;">Step 1 — Create a bot (30 seconds)</strong><br>
+      Open Telegram → search <code>@BotFather</code> → send <code>/newbot</code><br>
+      Give it any name → copy the <strong>bot token</strong> it gives you<br><br>
+
+      <strong style="color:#29b6f6;">Step 2 — Get your Chat ID</strong><br>
+      Send any message to your new bot<br>
+      Open this URL in your browser (replace TOKEN):<br>
+      <code style="color:#00ff41;font-size:.72rem;word-break:break-all;">https://api.telegram.org/botTOKEN/getUpdates</code><br>
+      Find <code>"chat":{"id":XXXXXXXXX}</code> — that number is your Chat ID<br><br>
+
+      <strong style="color:#29b6f6;">Step 3 — Add to Cloudflare + set webhook</strong><br>
+      Go to Cloudflare → your Worker → Settings → Variables → add:<br>
+      <code>TELEGRAM_BOT_TOKEN</code> = your bot token<br>
+      <code>TELEGRAM_CHAT_ID</code> = your chat ID number<br>
+      Click Save and Deploy<br><br>
+      Then open this URL once to register the webhook (replace TOKEN):<br>
+      <code style="color:#00ff41;font-size:.72rem;word-break:break-all;">https://api.telegram.org/botTOKEN/setWebhook?url=https://gentle-sea-9a71.iamrahuljacobrj.workers.dev/telegram-webhook</code><br><br>
+      <strong style="color:#00ff41;">Done! Send anything to your bot → appears here instantly.</strong>
+    </div>
+  </div>
+</div>
+
 <script>
+function showTgGuide() { document.getElementById('tg-modal').style.display = 'block'; }
+
 let items = [], pendingFile = null, sseSource = null, sseAlive = false;
 let pollTimer = null, reconnectT = null, lastTs = null;
 
@@ -169,7 +450,6 @@ function connectSSE() {
     clearTimeout(reconnectT); reconnectT = setTimeout(connectSSE, 5000);
   };
 }
-
 function startPolling() { if (!pollTimer) pollTimer = setInterval(refresh, 2000); }
 function stopPolling()  { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
@@ -181,7 +461,6 @@ async function refresh() {
     if (!sseAlive) setStatus('polling');
   } catch { if (!sseAlive) setStatus('offline'); }
 }
-
 function applyItems(fresh) {
   const ts = fresh[0]?.timestamp || null;
   if (ts === lastTs && fresh.length === items.length) return;
@@ -193,7 +472,7 @@ async function addItem() {
   const btn = document.getElementById('add-btn');
   const txt = document.getElementById('txt').value.trim();
   if (!txt && !pendingFile) return;
-  btn.disabled = true; btn.textContent = '…';
+  btn.disabled = true; btn.textContent = '...';
   try {
     let item;
     if (pendingFile) item = await uploadFile(pendingFile);
@@ -202,9 +481,9 @@ async function addItem() {
     document.getElementById('txt').value = '';
     pendingFile = null; document.getElementById('file-input').value = '';
     document.getElementById('file-name').textContent = '';
-    toast('Added ✓');
-  } catch(e) { toast('Error: ' + e.message); await refresh(); }
-  finally { btn.disabled = false; btn.textContent = 'Add →'; }
+    toast('// TRANSMITTED');
+  } catch(e) { toast('// ERROR: ' + e.message); await refresh(); }
+  finally { btn.disabled = false; btn.textContent = 'TRANSMIT'; }
 }
 
 async function uploadFile(file) {
@@ -231,32 +510,32 @@ async function postJSON(data) {
 // ── Render ────────────────────────────────────────────────────
 function render() {
   const list = document.getElementById('items-list');
-  document.getElementById('count').textContent = items.length ? `${items.length} item${items.length !== 1 ? 's' : ''}` : '';
+  document.getElementById('count').textContent = items.length ? `${items.length} records` : '';
   if (!items.length) {
-    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><p>Nothing here yet.<br>Paste text, drop a file, or use the iPhone Shortcut.</p></div>`;
+    list.innerHTML = `<div class="empty"><div class="empty-icon">▓▒░</div><p>// BUFFER EMPTY<br>paste text · drop file · send via iPhone shortcut or Telegram</p></div>`;
     return;
   }
   list.innerHTML = items.map(item => `
     <div class="item" id="item-${item.id}">
       <div class="item-header">
-        <span class="source-badge ${item.source === 'site' ? 'site' : 'shortcut'}">${
-          item.source === 'site' ? '↗ Site' : '↙ iPhone'
+        <span class="source-badge ${item.source === 'site' ? 'site' : item.source === 'telegram' ? 'telegram' : 'shortcut'}">${
+          item.source === 'site' ? '↗ SITE' : item.source === 'telegram' ? '✈ TG' : '↙ iPHONE'
         }</span>
-        <span class="type-badge">${item.type}</span>
+        <span class="type-badge">${item.type.toUpperCase()}</span>
         <span class="item-time">${relTime(item.timestamp)}</span>
       </div>
       <div class="item-content">${renderContent(item)}</div>
       <div class="item-actions">
-        ${item.type === 'text' ? `<button class="btn-action" onclick="copyText('${item.id}',this)">copy</button>` : ''}
-        ${item.type !== 'text' ? `<button class="btn-action" onclick="dlFile('${item.id}','${escAttr(item.filename||'file')}')">download</button>` : ''}
-        <button class="btn-action delete" onclick="deleteItem('${item.id}')">delete</button>
+        ${item.type === 'text' ? `<button class="btn-action" onclick="copyText('${item.id}',this)">[COPY]</button>` : ''}
+        ${item.type !== 'text' ? `<button class="btn-action" onclick="dlFile('${item.id}','${escAttr(item.filename||'file')}')">[SAVE]</button>` : ''}
+        <button class="btn-action delete" onclick="deleteItem('${item.id}')">[DEL]</button>
       </div>
     </div>`).join('');
 }
 
 function renderContent(item) {
   if (item.type === 'text')  return `<div class="text-content">${escHtml(item.content)}</div>`;
-  if (item.type === 'image') return `<img class="img-content" src="data:${item.mimeType};base64,${item.content}" alt="Image"/>`;
+  if (item.type === 'image') return `<img class="img-content" src="data:${item.mimeType};base64,${item.content}" alt="img"/>`;
   if (item.type === 'audio') return `<audio controls src="data:${item.mimeType};base64,${item.content}"></audio>`;
   const size = item.content ? Math.round(item.content.length*.75/1024)+' KB' : '';
   return `<div class="doc-content"><div class="doc-icon">${docIcon(item.mimeType)}</div>
@@ -265,43 +544,37 @@ function renderContent(item) {
 
 // ── Actions ───────────────────────────────────────────────────
 async function deleteItem(id) { items = items.filter(i=>i.id!==id); render(); await fetch(`${WORKER_URL}/api/items/${id}`,{method:'DELETE'}); }
-async function clearAll() { if(!confirm('Clear all?')) return; items=[]; render(); await fetch(`${WORKER_URL}/api/items`,{method:'DELETE'}); }
+async function clearAll() { if(!confirm('CLEAR ALL RECORDS?')) return; items=[]; render(); await fetch(`${WORKER_URL}/api/items`,{method:'DELETE'}); }
 function copyText(id, btn) {
   const item = items.find(i=>i.id===id); if (!item) return;
   navigator.clipboard.writeText(item.content).then(() => {
-    btn.textContent='copied!'; btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('copied');},1500);
+    btn.textContent='[OK]'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='[COPY]';btn.classList.remove('copied');},1500);
   });
 }
 function dlFile(id, fn) { const item=items.find(i=>i.id===id); if(!item) return; const a=document.createElement('a'); a.href=`data:${item.mimeType};base64,${item.content}`; a.download=fn; a.click(); }
 
-// ── Paste anywhere ────────────────────────────────────────────
 document.addEventListener('paste', e => {
   if (document.activeElement?.id==='txt') return;
   const t = e.clipboardData.getData('text');
-  if (t) { document.getElementById('txt').value=t; toast('Text pasted — hit Add →'); }
+  if (t) { document.getElementById('txt').value=t; toast('// TEXT CAPTURED'); }
   const f = e.clipboardData.files[0];
-  if (f) { attachFile(f); toast(`File ready: ${f.name}`); }
+  if (f) { attachFile(f); toast('// FILE READY: '+f.name); }
 });
 
-// ── Status ────────────────────────────────────────────────────
 function setStatus(s) {
   const pill=document.getElementById('status-pill'), text=document.getElementById('status-text');
   pill.className='status-pill'+(s==='live'?' live':s==='polling'?' polling':'');
-  text.textContent=s==='live'?'live':s==='polling'?'polling 2s':'offline';
+  text.textContent=s==='live'?'LIVE':s==='polling'?'POLL_2S':'OFFLINE';
 }
-
-// ── Helpers ───────────────────────────────────────────────────
 function toast(msg,ms=2500){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),ms);}
 function relTime(iso){const d=Date.now()-new Date(iso).getTime();if(d<60000)return'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escAttr(s){return String(s).replace(/"/g,'&quot;');}
-function docIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('zip'))return'🗜️';if(m.includes('video'))return'🎬';if(m.includes('sheet')||m.includes('excel'))return'📊';if(m.includes('word'))return'📝';return'📎';}
+function docIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('zip'))return'🗜';if(m.includes('video'))return'🎬';if(m.includes('sheet')||m.includes('excel'))return'📊';if(m.includes('word'))return'📝';return'📎';}
 
-// ── Start ─────────────────────────────────────────────────────
 connectSSE();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); if (!sseAlive) connectSSE(); } });
 </script>
-
 </body>
 </html>
