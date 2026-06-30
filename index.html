@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>CLIP//BOARD</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Orbitron:wght@400;600;900&amp;display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -324,45 +325,58 @@ audio { width: 100%; filter: invert(1) hue-rotate(100deg); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--green3); }
+
+#loginScreen{position:fixed;inset:0;background:#020c02;display:flex;align-items:center;justify-content:center;z-index:10000}
+.login-box{width:380px;background:#071407;border:1px solid #00ff41;padding:24px;color:#c8ffc8;font-family:'Share Tech Mono',monospace}
+.login-box h2{font-family:'Orbitron',monospace;color:#00ff41;margin-bottom:18px}
+.login-box input,.login-box button{width:100%;margin:8px 0;padding:10px;background:#0a1e0a;border:1px solid #1a5c1a;color:#c8ffc8}
+.login-box button{cursor:pointer;background:#00ff41;color:#020c02;font-weight:bold}
+#logoutBtn{display:none}
 </style>
 </head>
 <body>
+<div id="loginScreen">
+<div class="login-box">
+<h2>CLIP//BOARD LOGIN</h2>
+<input id="phone" placeholder="+91XXXXXXXXXX"/>
+<div id="recaptcha-container"></div>
+<button id="sendOtp">Send OTP</button>
+<input id="otp" placeholder="Enter OTP"/>
+<button id="verifyOtp">Verify OTP</button>
+</div>
+</div>
 
 <script>
   const WORKER_URL = 'https://gentle-sea-9a71.iamrahuljacobrj.workers.dev';
 </script>
-
 <header>
-  <div class="logo">
-    <div class="logo-main">CLIP//BOARD</div>
-    <div class="logo-sub">secure · instant · cross-device</div>
-  </div>
-  <div class="header-right">
-    <div class="status-pill" id="status-pill"><div class="dot"></div><span id="status-text">connecting</span></div>
-    <button class="btn-clear" onclick="clearAll()">CLR_ALL</button>
-  </div>
-</header>
-
-<div class="input-zone" id="dropzone">
-  <textarea id="txt" placeholder="paste text or drop file…"></textarea>
-  <div class="input-toolbar">
-    <div class="toolbar-left">
-      <label class="btn-file" for="file-input">[+ FILE]</label>
-      <input type="file" id="file-input" onchange="onFileSelected(this)"/>
-      <span class="file-preview" style="color:var(--green2)" id="file-name"></span>
-    </div>
-    <button class="btn-add" id="add-btn" onclick="addItem()">TRANSMIT</button>
-  </div>
+<div class="logo">
+<div class="logo-main">CLIP//BOARD</div>
+<div class="logo-sub">secure · instant · cross-device</div>
 </div>
-<div class="drop-hint">// drag & drop any file · live sync via SSE · updates instantly</div>
-
+<div class="header-right">
+<div class="status-pill" id="status-pill"><div class="dot"></div><span id="status-text">connecting</span></div>
+<button class="btn-clear" onclick="clearAll()">CLR_ALL</button>
+<button class="btn-clear" id="logoutBtn">LOGOUT</button></div>
+</header>
+<div class="input-zone" id="dropzone">
+<textarea id="txt" placeholder="paste text or drop file…"></textarea>
+<div class="input-toolbar">
+<div class="toolbar-left">
+<label class="btn-file" for="file-input">[+ FILE]</label>
+<input id="file-input" onchange="onFileSelected(this)" type="file"/>
+<span class="file-preview" id="file-name" style="color:var(--green2)"></span>
+</div>
+<button class="btn-add" id="add-btn" onclick="addItem()">TRANSMIT</button>
+</div>
+</div>
+<div class="drop-hint">// drag &amp; drop any file · live sync via SSE · updates instantly</div>
 <div class="section-header">
-  <span class="section-label">// BUFFER</span>
-  <span class="item-count" id="count"></span>
+<span class="section-label">// BUFFER</span>
+<span class="item-count" id="count"></span>
 </div>
 <div id="items-list"></div>
 <div id="toast"></div>
-
 <script>
 let items = [], pendingFile = null, sseSource = null, sseAlive = false;
 let pollTimer = null, reconnectT = null, lastTs = null;
@@ -518,5 +532,46 @@ function docIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('zip'))re
 connectSSE();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); if (!sseAlive) connectSSE(); } });
 </script>
-</body>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+const firebaseConfig={
+ apiKey:"AIzaSyBWiDd4lt348Y72A6UlhVYmKhg1ilNbbEM",
+ authDomain:"otp-sms-376c8.firebaseapp.com",
+ projectId:"otp-sms-376c8",
+ storageBucket:"otp-sms-376c8.firebasestorage.app",
+ messagingSenderId:"66434003616",
+ appId:"1:66434003616:web:d50a96872d2e56bd57cfc5",
+ measurementId:"G-Y5VYJDKLN6"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+
+window.addEventListener("load",()=>{
+ const verifier=new RecaptchaVerifier(auth,"recaptcha-container",{size:"normal"});
+ let confirmation;
+ document.getElementById("sendOtp").onclick=async()=>{
+   const phone=document.getElementById("phone").value.trim();
+   confirmation=await signInWithPhoneNumber(auth,phone,verifier);
+   alert("OTP sent");
+ };
+ document.getElementById("verifyOtp").onclick=async()=>{
+   const code=document.getElementById("otp").value.trim();
+   await confirmation.confirm(code);
+ };
+ onAuthStateChanged(auth,user=>{
+   const login=document.getElementById("loginScreen");
+   const logout=document.getElementById("logoutBtn");
+   if(user){
+      login.style.display="none";
+      logout.style.display="inline-block";
+   }else{
+      login.style.display="flex";
+      logout.style.display="none";
+   }
+ });
+ document.getElementById("logoutBtn").onclick=()=>signOut(auth);
+});
+</script></body>
 </html>
