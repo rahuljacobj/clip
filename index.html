@@ -340,8 +340,14 @@ audio { width: 100%; filter: invert(1) hue-rotate(100deg); }
 <h2>CLIP//BOARD LOGIN</h2>
 <input id="email" placeholder="Email" type="email"/>
 <input id="password" placeholder="Password" type="password"/>
-<button id="loginBtn">LOGIN</button>
+<button id="loginBtn">LOGIN WITH EMAIL</button>
 <button id="signupBtn">CREATE ACCOUNT</button>
+<hr style="margin:12px 0;border-color:#1a5c1a">
+<input id="phone" placeholder="+919876543210" type="tel"/>
+<div id="recaptcha-container"></div>
+<button id="sendOtpBtn">SEND OTP</button>
+<input id="otp" placeholder="Enter OTP" type="text"/>
+<button id="verifyOtpBtn">VERIFY OTP</button>
 <div id="loginMsg" style="margin-top:10px;color:#7acc7a;font-size:.8rem"></div>
 </div></div>
 
@@ -533,7 +539,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { re
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getAuth,onAuthStateChanged,signOut,signInWithEmailAndPassword,createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getAuth,onAuthStateChanged,signOut,signInWithEmailAndPassword,createUserWithEmailAndPassword,RecaptchaVerifier,signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 const firebaseConfig={apiKey:"AIzaSyBWiDd4lt348Y72A6UlhVYmKhg1ilNbbEM",authDomain:"otp-sms-376c8.firebaseapp.com",projectId:"otp-sms-376c8",storageBucket:"otp-sms-376c8.firebasestorage.app",messagingSenderId:"66434003616",appId:"1:66434003616:web:d50a96872d2e56bd57cfc5"};
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
@@ -549,6 +555,22 @@ signupBtn.onclick=async()=>{
  msg().textContent="Account created. Logged in.";
  }catch(e){msg().textContent=e.message;}
 };
+
+window.recaptchaVerifier=new RecaptchaVerifier(auth,"recaptcha-container",{size:"normal"});
+let confirmationResult=null;
+sendOtpBtn.onclick=async()=>{
+ try{
+  confirmationResult=await signInWithPhoneNumber(auth,phone.value,window.recaptchaVerifier);
+  msg().textContent="OTP sent";
+ }catch(e){msg().textContent=e.message;}
+};
+verifyOtpBtn.onclick=async()=>{
+ try{
+  await confirmationResult.confirm(otp.value);
+  msg().textContent="Phone login successful";
+ }catch(e){msg().textContent=e.message;}
+};
+
 logoutBtn.onclick=()=>signOut(auth);
 onAuthStateChanged(auth,u=>{
  loginScreen.style.display=u?"none":"flex";
